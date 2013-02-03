@@ -11,3 +11,9 @@
 *.lai
 *.la
 *.a
+
+# scons
+.sconsign.dblite
+
+# vim
+*.sw[a-z]
