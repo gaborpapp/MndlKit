@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<cinder>
+<block
+	name="MndlKit"
+	id="hu.mndl.kit"
+	author="mndl"
+	summary="MndlKit" >
+	<sourcePattern>src/*.cpp</sourcePattern>
+	<includePath system="true">src</includePath>
+</block>
+</cinder>
