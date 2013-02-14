@@ -5,7 +5,8 @@
 	id="hu.mndl.kit"
 	author="mndl"
 	summary="MndlKit" >
-	<sourcePattern>src/*.cpp</sourcePattern>
-	<includePath system="true">src</includePath>
+	<source>src/*.cpp</source>
+	<header>src/mndlkit/params/*.h</header>
+	<includePath>src</includePath>
 </block>
 </cinder>
