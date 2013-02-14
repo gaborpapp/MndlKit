@@ -107,7 +107,9 @@ void PInterfaceGl::save()
 {
 	BOOST_FOREACH(boost::function<void()> f, persistCallbacks())
 		f();
-	root().write( writeFile(filename()) );
+	DataTargetPathRef outpath = writeFile( filename() );
+	if ( outpath->getStream() != OStreamRef() )
+		root().write( writeFile(filename()) );
 }
 
 void PInterfaceGl::addPersistentSizeAndPosition()
