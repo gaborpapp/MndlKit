@@ -2,8 +2,11 @@ Import('env')
 
 _INCLUDES = [Dir('../src').abspath]
 
-_SOURCES = ['PParams.cpp']
-_SOURCES = [File('../src/mndlkit/params/' + s).abspath for s in _SOURCES]
+_SOURCES_PARAMS = ['PParams.cpp']
+_SOURCES_PARAMS = [File('../src/mndlkit/params/' + s).abspath for s in _SOURCES_PARAMS]
+_SOURCES_FX = ['KawaseBloom.cpp']
+_SOURCES_FX = [File('../src/mndlkit/gl/fx/' + s).abspath for s in _SOURCES_FX]
+_SOURCES = _SOURCES_PARAMS + _SOURCES_FX
 
 env.Append(APP_SOURCES = _SOURCES)
 env.Append(CPPPATH = _INCLUDES)
