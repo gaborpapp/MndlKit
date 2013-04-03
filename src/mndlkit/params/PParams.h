@@ -31,7 +31,7 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 
-namespace mndl { namespace kit { namespace params {
+namespace mndl { namespace params {
 
 class PInterfaceGl : public ci::params::InterfaceGl {
  public:
@@ -168,5 +168,5 @@ protected:
 	static std::string name2id( const std::string& name );
 };
 
-} } } // namespace mndl::kit::params
+} } // namespace mndl::params
 

@@ -35,7 +35,7 @@
 using namespace std;
 using namespace ci;
 
-namespace mndl { namespace kit { namespace params {
+namespace mndl { namespace params {
 
 PInterfaceGl::PInterfaceGl( const std::string &title, const ci::Vec2i &size, const ci::Vec2i &pos /* = Vec2i::zero() */,
 							const ci::ColorA colorA /* = ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) */ ) :
@@ -311,5 +311,5 @@ void PInterfaceGl::persistColor(ci::Color *var, const std::string& paramId)
 	getXml().getChild(paramId).setValue( colorToHex( *var ) );
 }
 
-} } } // namespace mndl::kit::params
+} } // namespace mndl::params
 
