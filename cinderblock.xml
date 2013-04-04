@@ -7,6 +7,8 @@
 	summary="MndlKit" >
 	<source>src/mndlkit/params/*.cpp</source>
 	<header>src/mndlkit/params/*.h</header>
+	<source>src/mndlkit/gl/fx/*.cpp</source>
+	<header>src/mndlkit/gl/fx/*.h</header>
 	<includePath>src</includePath>
 </block>
 </cinder>
