@@ -41,6 +41,7 @@ PInterfaceGl::PInterfaceGl( const std::string &title, const ci::Vec2i &size, con
 							const ci::ColorA colorA /* = ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) */ ) :
 	ci::params::InterfaceGl( title, size, colorA ), m_id( name2id( title ) )
 {
+	TwSetCurrentWindow( mTwWindowId );
 	if ( pos != ci::Vec2i::zero() )
 		TwSetParam( mBar.get(), NULL, "position", TW_PARAM_INT32, 2, pos.ptr() );
 }
@@ -114,6 +115,8 @@ void PInterfaceGl::save()
 
 void PInterfaceGl::addPersistentSizeAndPosition()
 {
+	TwSetCurrentWindow( mTwWindowId );
+
 	int size[2];
 	TwGetParam( mBar.get(), NULL, "size", TW_PARAM_INT32, 2, size );
 
@@ -170,6 +173,8 @@ void PInterfaceGl::addPersistentSizeAndPosition()
 
 void PInterfaceGl::persistSizeAndPosition()
 {
+	TwSetCurrentWindow( mTwWindowId );
+
 	int size[2];
 	TwGetParam( mBar.get(), NULL, "size", TW_PARAM_INT32, 2, size );
 
