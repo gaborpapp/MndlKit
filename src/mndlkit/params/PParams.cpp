@@ -232,13 +232,21 @@ void PInterfaceGl::addPersistentParam(const std::string& name, std::vector<std::
 
 void PInterfaceGl::showAllParams( bool visible, bool alwaysHideHelp /* = true */ )
 {
-	int barCount = TwGetBarCount();
+	int windowId = 0;
 
-	int32_t visibleInt = visible ? 1 : 0;
-	for ( int i = 0; i < barCount; ++i )
+	while ( TwWindowExists( windowId ) )
 	{
-		TwBar *bar = TwGetBarByIndex( i );
-		TwSetParam( bar, NULL, "visible", TW_PARAM_INT32, 1, &visibleInt );
+		TwSetCurrentWindow( windowId );
+		int barCount = TwGetBarCount();
+
+		int32_t visibleInt = visible ? 1 : 0;
+		for ( int i = 0; i < barCount; ++i )
+		{
+			TwBar *bar = TwGetBarByIndex( i );
+			TwSetParam( bar, NULL, "visible", TW_PARAM_INT32, 1, &visibleInt );
+		}
+
+		windowId++;
 	}
 
 	if ( alwaysHideHelp )
