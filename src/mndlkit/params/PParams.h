@@ -39,6 +39,10 @@ class PInterfaceGl : public ci::params::InterfaceGl {
 	PInterfaceGl( const std::string &title, const ci::Vec2i &size,
 				  const ci::Vec2i &pos = ci::Vec2i::zero(),
 				  const ci::ColorA colorA = ci::ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) );
+	PInterfaceGl( ci::app::WindowRef window,
+				  const std::string &title, const ci::Vec2i &size,
+				  const ci::Vec2i &pos = ci::Vec2i::zero(),
+				  const ci::ColorA colorA = ci::ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) );
 
 	/** Add a persistent parameter for the window size, position and iconified status
 	 * Persistent parameter will be initialized with saved value if found, or with
