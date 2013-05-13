@@ -145,6 +145,8 @@ KawaseBloom::Obj::Obj( int w, int h )
 
 ci::gl::Texture &KawaseBloom::process( const ci::gl::Texture &source, int iterations, float strength )
 {
+	ci::gl::SaveFramebufferBinding bindingSaver;
+
 	Area viewport = ci::gl::getViewport();
 	ci::gl::pushMatrices();
 
