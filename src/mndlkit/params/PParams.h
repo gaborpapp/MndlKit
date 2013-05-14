@@ -24,10 +24,12 @@
 
 #include "cinder/params/Params.h"
 #include "cinder/Xml.h"
+#include "cinder/Utilities.h"
 
 #include <vector>
 #include <string>
 
+#include <boost/any.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 
@@ -99,6 +101,11 @@ class PInterfaceGl : public ci::params::InterfaceGl {
 	void addPersistentParam(const std::string& name, std::vector<std::string> &enumNames, int* var, int defVal,
 			const std::string& optionsStr="", bool readOnly=false);
 
+	/** Adds presets to the bar. Presets containing all variables in
+	 *  \a vars are stored and restored with an assigned label.
+	 */
+	void addPresets( std::vector< std::pair< std::string, boost::any > > &vars );
+
 	//! Shows/hides all bars except help, which is always hidden if \a alwaysHideHelp is set.
 	static void showAllParams( bool visible, bool alwaysHideHelp = true );
 
@@ -150,8 +157,20 @@ protected:
 	template<typename T>
 	void persistParam(T * var, const std::string& paramId)
 	{
-		if (!getXml().hasChild(paramId))
-			getXml().push_back(ci::XmlTree(paramId,""));
+		std::vector< std::string > tokens = ci::split( paramId, "/" );
+		std::string parentId = "";
+		for ( auto it = tokens.cbegin(); it != tokens.cend(); ++it )
+		{
+			if ( !getXml().hasChild( parentId + "/" + *it ) )
+			{
+				if ( parentId == "" )
+					getXml().push_back( ci::XmlTree( *it, "" ) );
+				else
+					getXml().getChild( parentId ).push_back( ci::XmlTree( *it, "" ) );
+			}
+			parentId += "/" + *it;
+		}
+
 		getXml().getChild(paramId).setValue(*var);
 	}
 
@@ -167,9 +186,17 @@ protected:
 		return root().getChild(m_id);
 	}
 
-
 	// convert "some title" to SomeTitle so it can be used as XML tag
 	static std::string name2id( const std::string& name );
+
+	// presets
+	int mPreset; // active preset
+	std::vector< std::pair< std::string, boost::any > > mPresetVars; // variables in preset
+	std::string mPresetName; // label for storing preset
+	std::vector< std::string > mPresetLabels; // all preset labels
+	void storePreset();
+	void restorePreset();
+	void removePreset();
 };
 
 } } // namespace mndl::params

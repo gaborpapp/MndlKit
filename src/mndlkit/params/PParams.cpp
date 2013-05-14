@@ -94,6 +94,160 @@ std::string PInterfaceGl::name2id( const std::string& name )
 	return id;
 }
 
+void PInterfaceGl::storePreset()
+{
+	if ( mPresetName == "" )
+		return;
+
+	TwSetCurrentWindow( mTwWindowId );
+
+	// add to preset names
+	if ( mPresetLabels.end() == std::find( mPresetLabels.begin(), mPresetLabels.end(), mPresetName ) )
+	{
+		std::string enumString = " enum=' ";
+		mPresetLabels.push_back( mPresetName );
+		for ( size_t i = 0; i < mPresetLabels.size(); i++ )
+		{
+			enumString += boost::lexical_cast< std::string >( i ) + " {" +
+				mPresetLabels[ i ] + "}";
+			if ( i < mPresetLabels.size() - 1 )
+				enumString += ", ";
+		}
+		enumString += "'";
+
+		std::string barName = TwGetBarName( mBar.get() );
+		setOptions( barName + " Preset", enumString );
+	}
+
+	const std::string presetId = "presets/" + name2id( mPresetName );
+	for ( std::vector< std::pair< std::string, boost::any > >::iterator it = mPresetVars.begin();
+			it != mPresetVars.end(); ++it )
+	{
+		const std::string id = presetId + "/" + name2id( it->first );
+		if ( it->second.type() == typeid( int * ) )
+		{
+			persistParam< int >( boost::any_cast< int * >( it->second ), id );
+		}
+		else
+		if ( it->second.type() == typeid( float * ) )
+		{
+			persistParam< float >( boost::any_cast< float * >( it->second ), id );
+		}
+		else
+		if ( it->second.type() == typeid( bool * ) )
+		{
+			persistParam< bool >( boost::any_cast< bool * >( it->second ), id );
+		}
+		else
+		{
+			assert( false );
+		}
+	}
+}
+
+void PInterfaceGl::restorePreset()
+{
+	if ( mPreset >= mPresetLabels.size() )
+		return;
+
+	const std::string presetId = "presets/" + name2id( mPresetLabels[ mPreset ] );
+	for ( std::vector< std::pair< std::string, boost::any > >::iterator it = mPresetVars.begin();
+			it != mPresetVars.end(); ++it )
+	{
+		const std::string id = presetId + "/" + name2id( it->first );
+		if ( !getXml().hasChild( id ) )
+			continue;
+
+		if ( it->second.type() == typeid( int * ) )
+		{
+			*( boost::any_cast< int * >( it->second ) ) = getXml().getChild( id ).getValue< int >();
+		}
+		else
+		if ( it->second.type() == typeid( float * ) )
+		{
+			*( boost::any_cast< float * >( it->second ) ) = getXml().getChild( id ).getValue< float >();
+		}
+		else
+		if ( it->second.type() == typeid( bool * ) )
+		{
+			*( boost::any_cast< bool * >( it->second ) ) = getXml().getChild( id ).getValue< bool >();
+		}
+		else
+		{
+			assert( false );
+		}
+	}
+}
+
+void PInterfaceGl::removePreset()
+{
+	if ( mPreset >= mPresetLabels.size() )
+		return;
+
+	const std::string presetId = "presets/" + name2id( mPresetLabels[ mPreset ] );
+	if ( !getXml().hasChild( presetId ) )
+		return;
+
+	XmlTree &node = getXml().getChild( presetId );
+	// remove node from parent's children container
+	XmlTree::Container &children = node.getParent().getChildren();
+	// TODO: remove_if does not work with the new XmlTree::Container
+	std::string nodeTag = node.getTag();
+	for ( XmlTree::Container::iterator chIt = children.begin(); chIt != children.end(); )
+	{
+		if ( (*chIt)->getTag() == nodeTag )
+			chIt = children.erase( chIt );
+		else
+			chIt++;
+	}
+
+	// remove from optionmenu
+	std::vector< std::string >::iterator it = mPresetLabels.begin() + mPreset;
+	mPresetLabels.erase( it );
+	std::string enumString = " enum=' ";
+	for ( size_t i = 0; i < mPresetLabels.size(); i++ )
+	{
+		enumString += boost::lexical_cast< std::string >( i ) + " {" +
+			mPresetLabels[ i ] + "}, ";
+	}
+	// FIXME: an extra blank entry is required otherwise the deleted label is still shown
+	enumString += boost::lexical_cast< std::string >( mPresetLabels.size() ) + "{ }";
+	enumString += "'";
+
+	TwSetCurrentWindow( mTwWindowId );
+	std::string barName = TwGetBarName( mBar.get() );
+	setOptions( barName + " Preset", enumString );
+	if ( mPreset >= mPresetLabels.size() )
+		mPreset = 0;
+}
+
+void PInterfaceGl::addPresets( std::vector< std::pair< std::string, boost::any > > &vars )
+{
+	mPresetLabels.clear();
+	try
+	{
+		XmlTree firstPreset = getXml().getChild( "presets" );
+		for ( XmlTree::Iter pit = firstPreset.begin(); pit != firstPreset.end(); ++pit )
+		{
+			mPresetLabels.push_back( pit->getTag() );
+		}
+	}
+	catch ( XmlTree::ExcChildNotFound )
+	{
+	}
+
+	TwSetCurrentWindow( mTwWindowId );
+	std::string barName = TwGetBarName( mBar.get() );
+	mPresetVars = vars;
+	mPreset = 0;
+	addParam( barName + " Preset", mPresetLabels, &mPreset, "group=" + barName + "-Presets" );
+	mPresetName = "";
+	addButton( barName + " Load", std::bind( &PInterfaceGl::restorePreset, this ), "group=" + barName + "-Presets" );
+	addParam( barName + " Save name", &mPresetName, "group=" + barName + "-Presets" );
+	addButton( barName + " Save", std::bind( &PInterfaceGl::storePreset, this ), "group=" + barName + "-Presets" );
+	addButton( barName + " Delete", std::bind( &PInterfaceGl::removePreset, this ), "group=" + barName + "-Presets" );
+}
+
 void PInterfaceGl::load( const std::string &fname )
 {
 	fs::path paramsXml( app::getAssetPath( fname ));
