@@ -417,6 +417,29 @@ void PInterfaceGl::showAllParams( bool visible, bool alwaysHideHelp /* = true */
 		TwDefine( "TW_HELP visible=false" );
 }
 
+void PInterfaceGl::maximizeAllParams( bool maximized /* = true */, bool alwaysHideHelp /* = true */ )
+{
+	int windowId = 0;
+
+	while ( TwWindowExists( windowId ) )
+	{
+		TwSetCurrentWindow( windowId );
+		int barCount = TwGetBarCount();
+
+		int32_t maximizedInt = maximized ? 0 : 1;
+		for ( int i = 0; i < barCount; ++i )
+		{
+			TwBar *bar = TwGetBarByIndex( i );
+			TwSetParam( bar, NULL, "iconified", TW_PARAM_INT32, 1, &maximizedInt );
+		}
+
+		windowId++;
+	}
+
+	if ( alwaysHideHelp )
+		TwDefine( "TW_HELP visible=false" );
+}
+
 // string-color onversion by Paul Houx
 std::string PInterfaceGl::colorToHex(const ci::ColorA &color)
 {

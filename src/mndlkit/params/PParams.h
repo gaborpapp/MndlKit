@@ -109,6 +109,9 @@ class PInterfaceGl : public ci::params::InterfaceGl {
 	//! Shows/hides all bars except help, which is always hidden if \a alwaysHideHelp is set.
 	static void showAllParams( bool visible, bool alwaysHideHelp = true );
 
+	//! Iconifies or deiconifies all bars. Hides help is \a alwaysHideHelp is set.
+	static void maximizeAllParams( bool maximized = true, bool alwaysHideHelp = true );
+
 	/** Loads persistent params from file. At the moment this only works when
 	 * called at application start up, before creating persistent parameteres.
 	 * Will remember the filename for saving later.
