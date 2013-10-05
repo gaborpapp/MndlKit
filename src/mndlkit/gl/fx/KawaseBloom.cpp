@@ -146,8 +146,8 @@ KawaseBloom::Obj::Obj( int w, int h )
 ci::gl::Texture &KawaseBloom::process( const ci::gl::Texture &source, int iterations, float strength )
 {
 	ci::gl::SaveFramebufferBinding bindingSaver;
+	glPushAttrib( GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT | GL_VIEWPORT_BIT );
 
-	Area viewport = ci::gl::getViewport();
 	ci::gl::pushMatrices();
 
 	// bloom
@@ -156,6 +156,13 @@ ci::gl::Texture &KawaseBloom::process( const ci::gl::Texture &source, int iterat
 	// set orthographic projection with lower-left origin
 	ci::gl::setMatricesWindow( mObj->mBloomFbo.getSize(), false );
 	ci::gl::setViewport( mObj->mBloomFbo.getBounds() );
+
+	ci::gl::enableAlphaBlending( true );
+	GLenum buffers[] = { GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT,
+		GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT, GL_COLOR_ATTACHMENT4_EXT,
+		GL_COLOR_ATTACHMENT5_EXT, GL_COLOR_ATTACHMENT6_EXT, GL_COLOR_ATTACHMENT7_EXT };
+	glDrawBuffers( 8, buffers );
+	ci::gl::clear( ColorA::gray( 0.f, 0.f ) );
 
 	ci::gl::color( Color::white() );
 	source.enableAndBind();
@@ -169,11 +176,6 @@ ci::gl::Texture &KawaseBloom::process( const ci::gl::Texture &source, int iterat
 		ci::gl::drawSolidRect( mObj->mBloomFbo.getBounds() );
 		mObj->mBloomFbo.bindTexture( 0, i );
 	}
-	for ( int i = iterations; i < 8; i++ )
-	{
-		glDrawBuffer( GL_COLOR_ATTACHMENT0_EXT + i );
-		ci::gl::clear( Color::black() );
-	}
 
 	mObj->mBloomShader.unbind();
 
@@ -186,8 +188,8 @@ ci::gl::Texture &KawaseBloom::process( const ci::gl::Texture &source, int iterat
 	mObj->mOutputFbo.bindFramebuffer();
 	ci::gl::setMatricesWindow( mObj->mOutputFbo.getSize(), false );
 	ci::gl::setViewport( mObj->mOutputFbo.getBounds() );
+	ci::gl::clear( ColorA::gray( 0.f, 0.f ) );
 
-	ci::gl::enableAlphaBlending();
 
 	mObj->mMixerShader.bind();
 	mObj->mMixerShader.uniform( "bloomStrength", strength );
@@ -204,10 +206,8 @@ ci::gl::Texture &KawaseBloom::process( const ci::gl::Texture &source, int iterat
 
 	mObj->mOutputFbo.unbindFramebuffer();
 
-	ci::gl::disableAlphaBlending();
-
 	ci::gl::popMatrices();
-	ci::gl::setViewport(viewport);
+	glPopAttrib();
 
 	return mObj->mOutputFbo.getTexture();
 }
