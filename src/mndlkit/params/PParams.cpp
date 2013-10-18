@@ -268,6 +268,14 @@ void PInterfaceGl::load( const std::string &fname )
 	}
 }
 
+void PInterfaceGl::load( const ci::fs::path &fpath )
+{
+	filename() = fpath;
+	if ( fs::exists( fpath ) ) {
+		root() = XmlTree( loadFile( fpath ) );
+	}
+}
+
 void PInterfaceGl::save()
 {
 	BOOST_FOREACH(boost::function<void()> f, persistCallbacks())

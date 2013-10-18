@@ -117,6 +117,7 @@ class PInterfaceGl : public ci::params::InterfaceGl {
 	 * Will remember the filename for saving later.
 	 */
 	static void load( const std::string &path = "params.xml" );
+	static void load( const ci::fs::path &path );
 
 	/** Save persistent params (to the path passed to load before). */
 	static void save();
