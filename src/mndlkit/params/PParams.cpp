@@ -56,6 +56,21 @@ PInterfaceGl::PInterfaceGl( ci::app::WindowRef window,
 		TwSetParam( mBar.get(), NULL, "position", TW_PARAM_INT32, 2, pos.ptr() );
 }
 
+PInterfaceGlRef PInterfaceGl::create( const std::string &title, const Vec2i &size,
+									  const ci::Vec2i &pos /* = ci::Vec2i::zero() */,
+									  const ColorA &color /* = ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) */ )
+{
+	return PInterfaceGlRef( new PInterfaceGl( title, size, pos, color ) );
+}
+
+PInterfaceGlRef PInterfaceGl::create( ci::app::WindowRef window,
+									  const std::string &title, const Vec2i &size,
+									  const ci::Vec2i &pos /* = ci::Vec2i::zero() */,
+									  const ColorA &color /* = ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) */ )
+{
+	return PInterfaceGlRef( new PInterfaceGl( window, title, size, pos, color ) );
+}
+
 std::string PInterfaceGl::name2id( const std::string& name )
 {
 	std::string id = "";
