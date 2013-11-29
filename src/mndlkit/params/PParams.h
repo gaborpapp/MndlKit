@@ -107,6 +107,34 @@ class PInterfaceGl : public ci::params::InterfaceGl {
 				boost::bind( &PInterfaceGl::persistParam<T>, this, &(var->z), id+"_z" ) );
 	}
 
+	template<typename T>
+	void addPersistentParam(const std::string& name, ci::Quaternion<T> *var, const ci::Quaternion<T> &defVal,
+			const std::string& optionsStr="", bool readOnly=false)
+	{
+		addParam(name,var,optionsStr,readOnly);
+		const std::string id = name2id(name);
+		var->v.x = getXml().hasChild(id+"_x")
+			? getXml().getChild(id+"_x").getValue(defVal.v.x)
+			: defVal.v.x;
+		var->v.y = getXml().hasChild(id+"_y")
+			? getXml().getChild(id+"_y").getValue(defVal.v.y)
+			: defVal.v.y;
+		var->v.z = getXml().hasChild(id+"_z")
+			? getXml().getChild(id+"_z").getValue(defVal.v.z)
+			: defVal.v.z;
+		var->w = getXml().hasChild(id+"_w")
+			? getXml().getChild(id+"_w").getValue(defVal.w)
+			: defVal.w;
+		persistCallbacks().push_back(
+				boost::bind( &PInterfaceGl::persistParam<T>, this, &(var->v.x), id+"_x" ) );
+		persistCallbacks().push_back(
+				boost::bind( &PInterfaceGl::persistParam<T>, this, &(var->v.y), id+"_y" ) );
+		persistCallbacks().push_back(
+				boost::bind( &PInterfaceGl::persistParam<T>, this, &(var->v.z), id+"_z" ) );
+		persistCallbacks().push_back(
+				boost::bind( &PInterfaceGl::persistParam<T>, this, &(var->w), id+"_w" ) );
+	}
+
 	//! Adds enumerated persistent parameter. The value corresponds to the indices of \a enumNames.
 	void addPersistentParam(const std::string& name, std::vector<std::string> &enumNames, int* var, int defVal,
 			const std::string& optionsStr="", bool readOnly=false);
