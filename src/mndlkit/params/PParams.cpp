@@ -60,7 +60,9 @@ PInterfaceGlRef PInterfaceGl::create( const std::string &title, const Vec2i &siz
 									  const ci::Vec2i &pos /* = ci::Vec2i::zero() */,
 									  const ColorA &color /* = ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) */ )
 {
-	return PInterfaceGlRef( new PInterfaceGl( title, size, pos, color ) );
+	PInterfaceGlRef barRef = PInterfaceGlRef( new PInterfaceGl( title, size, pos, color ) );
+	getBars().push_back( barRef );
+	return barRef;
 }
 
 PInterfaceGlRef PInterfaceGl::create( ci::app::WindowRef window,
@@ -68,7 +70,9 @@ PInterfaceGlRef PInterfaceGl::create( ci::app::WindowRef window,
 									  const ci::Vec2i &pos /* = ci::Vec2i::zero() */,
 									  const ColorA &color /* = ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) */ )
 {
-	return PInterfaceGlRef( new PInterfaceGl( window, title, size, pos, color ) );
+	PInterfaceGlRef barRef = PInterfaceGlRef( new PInterfaceGl( window, title, size, pos, color ) );
+	getBars().push_back( barRef );
+	return barRef;
 }
 
 std::string PInterfaceGl::name2id( const std::string& name )
@@ -109,195 +113,34 @@ std::string PInterfaceGl::name2id( const std::string& name )
 	return id;
 }
 
-void PInterfaceGl::storePreset()
+void PInterfaceGl::readSettings( const ci::DataSourceRef &source  )
 {
-	if ( mPresetName == "" )
-		return;
-
-	TwSetCurrentWindow( mTwWindowId );
-
-	// add to preset names
-	if ( mPresetLabels.end() == std::find( mPresetLabels.begin(), mPresetLabels.end(), mPresetName ) )
-	{
-		std::string enumString = " enum=' ";
-		mPresetLabels.push_back( mPresetName );
-		for ( size_t i = 0; i < mPresetLabels.size(); i++ )
-		{
-			enumString += boost::lexical_cast< std::string >( i ) + " {" +
-				mPresetLabels[ i ] + "}";
-			if ( i < mPresetLabels.size() - 1 )
-				enumString += ", ";
-		}
-		enumString += "'";
-
-		std::string barName = TwGetBarName( mBar.get() );
-		setOptions( barName + " Preset", enumString );
-	}
-
-	const std::string presetId = "presets/" + name2id( mPresetName );
-	for ( std::vector< std::pair< std::string, boost::any > >::iterator it = mPresetVars.begin();
-			it != mPresetVars.end(); ++it )
-	{
-		const std::string id = presetId + "/" + name2id( it->first );
-		if ( it->second.type() == typeid( int * ) )
-		{
-			persistParam< int >( boost::any_cast< int * >( it->second ), id );
-		}
-		else
-		if ( it->second.type() == typeid( float * ) )
-		{
-			persistParam< float >( boost::any_cast< float * >( it->second ), id );
-		}
-		else
-		if ( it->second.type() == typeid( bool * ) )
-		{
-			persistParam< bool >( boost::any_cast< bool * >( it->second ), id );
-		}
-		else
-		{
-			assert( false );
-		}
-	}
-}
-
-void PInterfaceGl::restorePreset()
-{
-	if ( mPreset >= mPresetLabels.size() )
-		return;
-
-	const std::string presetId = "presets/" + name2id( mPresetLabels[ mPreset ] );
-	for ( std::vector< std::pair< std::string, boost::any > >::iterator it = mPresetVars.begin();
-			it != mPresetVars.end(); ++it )
-	{
-		const std::string id = presetId + "/" + name2id( it->first );
-		if ( !getXml().hasChild( id ) )
-			continue;
-
-		if ( it->second.type() == typeid( int * ) )
-		{
-			*( boost::any_cast< int * >( it->second ) ) = getXml().getChild( id ).getValue< int >();
-		}
-		else
-		if ( it->second.type() == typeid( float * ) )
-		{
-			*( boost::any_cast< float * >( it->second ) ) = getXml().getChild( id ).getValue< float >();
-		}
-		else
-		if ( it->second.type() == typeid( bool * ) )
-		{
-			*( boost::any_cast< bool * >( it->second ) ) = getXml().getChild( id ).getValue< bool >();
-		}
-		else
-		{
-			assert( false );
-		}
-	}
-}
-
-void PInterfaceGl::removePreset()
-{
-	if ( mPreset >= mPresetLabels.size() )
-		return;
-
-	const std::string presetId = "presets/" + name2id( mPresetLabels[ mPreset ] );
-	if ( !getXml().hasChild( presetId ) )
-		return;
-
-	XmlTree &node = getXml().getChild( presetId );
-	// remove node from parent's children container
-	XmlTree::Container &children = node.getParent().getChildren();
-	// TODO: remove_if does not work with the new XmlTree::Container
-	std::string nodeTag = node.getTag();
-	for ( XmlTree::Container::iterator chIt = children.begin(); chIt != children.end(); )
-	{
-		if ( (*chIt)->getTag() == nodeTag )
-			chIt = children.erase( chIt );
-		else
-			chIt++;
-	}
-
-	// remove from optionmenu
-	std::vector< std::string >::iterator it = mPresetLabels.begin() + mPreset;
-	mPresetLabels.erase( it );
-	std::string enumString = " enum=' ";
-	for ( size_t i = 0; i < mPresetLabels.size(); i++ )
-	{
-		enumString += boost::lexical_cast< std::string >( i ) + " {" +
-			mPresetLabels[ i ] + "}, ";
-	}
-	// FIXME: an extra blank entry is required otherwise the deleted label is still shown
-	enumString += boost::lexical_cast< std::string >( mPresetLabels.size() ) + "{ }";
-	enumString += "'";
-
-	TwSetCurrentWindow( mTwWindowId );
-	std::string barName = TwGetBarName( mBar.get() );
-	setOptions( barName + " Preset", enumString );
-	if ( mPreset >= mPresetLabels.size() )
-		mPreset = 0;
-}
-
-void PInterfaceGl::addPresets( std::vector< std::pair< std::string, boost::any > > &vars )
-{
-	mPresetLabels.clear();
 	try
 	{
-		XmlTree firstPreset = getXml().getChild( "presets" );
-		for ( XmlTree::Iter pit = firstPreset.begin(); pit != firstPreset.end(); ++pit )
+		getSettingsXml() = XmlTree( source );
+	}
+	catch ( ... )
+	{ }
+}
+
+void PInterfaceGl::writeSettings( const ci::DataTargetRef &target )
+{
+	ci::XmlTree doc = ci::XmlTree::createDoc();
+	for ( std::weak_ptr< PInterfaceGl > barWeak : getBars() )
+	{
+		auto bar = barWeak.lock();
+		if ( !bar )
 		{
-			mPresetLabels.push_back( pit->getTag() );
+			continue;
 		}
-	}
-	catch ( XmlTree::ExcChildNotFound )
-	{
-	}
 
-	TwSetCurrentWindow( mTwWindowId );
-	std::string barName = TwGetBarName( mBar.get() );
-	mPresetVars = vars;
-	mPreset = 0;
-	addParam( barName + " Preset", mPresetLabels, &mPreset, "group=" + barName + "-Presets" );
-	mPresetName = "";
-	addButton( barName + " Load", std::bind( &PInterfaceGl::restorePreset, this ), "group=" + barName + "-Presets" );
-	addParam( barName + " Save name", &mPresetName, "group=" + barName + "-Presets" );
-	addButton( barName + " Save", std::bind( &PInterfaceGl::storePreset, this ), "group=" + barName + "-Presets" );
-	addButton( barName + " Delete", std::bind( &PInterfaceGl::removePreset, this ), "group=" + barName + "-Presets" );
-}
-
-void PInterfaceGl::load( const std::string &fname )
-{
-	fs::path paramsXml( app::getAssetPath( fname ));
-	if ( paramsXml.empty() )
-	{
-#if defined( CINDER_MAC )
-		fs::path assetPath( app::App::getResourcePath() / "assets" );
-#else
-		fs::path assetPath( app::App::get()->getAppPath() / "assets" );
-#endif
-		createDirectories( assetPath );
-		paramsXml = assetPath / "params.xml" ;
+		BOOST_FOREACH( boost::function< void() > f, bar->mPersistCallbacks )
+		{
+			f();
+		}
+		doc.push_back( bar->mRoot );
 	}
-
-	filename() = paramsXml;
-	if ( fs::exists( paramsXml ) ) {
-		root() = XmlTree( loadFile( paramsXml ) );
-	}
-}
-
-void PInterfaceGl::load( const ci::fs::path &fpath )
-{
-	filename() = fpath;
-	if ( fs::exists( fpath ) ) {
-		root() = XmlTree( loadFile( fpath ) );
-	}
-}
-
-void PInterfaceGl::save()
-{
-	BOOST_FOREACH(boost::function<void()> f, persistCallbacks())
-		f();
-	DataTargetPathRef outpath = writeFile( filename() );
-	if ( outpath->getStream() != OStreamRef() )
-		root().write( writeFile(filename()) );
+	doc.write( target );
 }
 
 void PInterfaceGl::addPersistentSizeAndPosition()
@@ -307,14 +150,14 @@ void PInterfaceGl::addPersistentSizeAndPosition()
 	int size[2];
 	TwGetParam( mBar.get(), NULL, "size", TW_PARAM_INT32, 2, size );
 
-	std::string idW = name2id("width");
-	size[0] = getXml().hasChild(idW)
-		? getXml().getChild(idW).getValue((int)size[0])
+	std::string idW = m_id + "/" + name2id("width");
+	size[0] = getSettingsXml().hasChild(idW)
+		? getSettingsXml().getChild(idW).getValue((int)size[0])
 		: size[0];
 
-	std::string idH = name2id("height");
-	size[1] = getXml().hasChild(idH)
-		? getXml().getChild(idH).getValue((int)size[1])
+	std::string idH = m_id + "/" + name2id("height");
+	size[1] = getSettingsXml().hasChild(idH)
+		? getSettingsXml().getChild(idH).getValue((int)size[1])
 		: size[1];
 
 	TwSetParam( mBar.get(), NULL, "size", TW_PARAM_INT32, 2, size );
@@ -322,14 +165,14 @@ void PInterfaceGl::addPersistentSizeAndPosition()
 	int pos[2];
 	TwGetParam( mBar.get(), NULL, "position", TW_PARAM_INT32, 2, pos );
 
-	std::string idX = name2id("posx");
-	pos[0] = getXml().hasChild(idX)
-		? getXml().getChild(idX).getValue((float)pos[0])
+	std::string idX = m_id + "/" + name2id("posx");
+	pos[0] = getSettingsXml().hasChild(idX)
+		? getSettingsXml().getChild(idX).getValue((float)pos[0])
 		: pos[0];
 
-	std::string idY = name2id("posy");
-	pos[1] = getXml().hasChild(idY)
-		? getXml().getChild(idY).getValue((float)pos[1])
+	std::string idY = m_id + "/" + name2id("posy");
+	pos[1] = getSettingsXml().hasChild(idY)
+		? getSettingsXml().getChild(idY).getValue((float)pos[1])
 		: pos[1];
 
 	TwSetParam( mBar.get(), NULL, "position", TW_PARAM_INT32, 2, pos );
@@ -337,9 +180,9 @@ void PInterfaceGl::addPersistentSizeAndPosition()
 	int icon;
 	TwGetParam( mBar.get(), NULL, "iconified", TW_PARAM_INT32, 1, &icon );
 
-	std::string idIcon = name2id("icon");
-	icon = getXml().hasChild(idIcon)
-		? getXml().getChild(idIcon).getValue((int)icon)
+	std::string idIcon = m_id + "/" + name2id("icon");
+	icon = getSettingsXml().hasChild(idIcon)
+		? getSettingsXml().getChild(idIcon).getValue((int)icon)
 		: icon;
 
 	TwSetParam( mBar.get(), NULL, "iconified", TW_PARAM_INT32, 1, &icon );
@@ -347,9 +190,9 @@ void PInterfaceGl::addPersistentSizeAndPosition()
 	int valuesWidth;
 	TwGetParam( mBar.get(), NULL, "valueswidth", TW_PARAM_INT32, 1, &valuesWidth );
 
-	std::string idValuesWidth = name2id("valueswidth");
-	valuesWidth = getXml().hasChild(idValuesWidth)
-		? getXml().getChild(idValuesWidth).getValue((int)valuesWidth)
+	std::string idValuesWidth = m_id + "/" + name2id("valueswidth");
+	valuesWidth = getSettingsXml().hasChild(idValuesWidth)
+		? getSettingsXml().getChild(idValuesWidth).getValue((int)valuesWidth)
 		: valuesWidth;
 
 	TwSetParam( mBar.get(), NULL, "valueswidth", TW_PARAM_INT32, 1, &valuesWidth );
@@ -410,8 +253,8 @@ void PInterfaceGl::addPersistentParam(const std::string& name, std::vector<std::
 {
 	addParam(name, enumNames, var, optionsStr, readOnly);
 	std::string id = name2id(name);
-	*var = getXml().hasChild(id)
-		? getXml().getChild(id).getValue(defVal)
+	*var = getSettingsXml().hasChild( m_id + "/" + id )
+		? getSettingsXml().getChild( m_id + "/" + id ).getValue(defVal)
 		: defVal;
 	persistCallbacks().push_back(
 			boost::bind( &PInterfaceGl::persistParam<int>, this, var, id ) );
@@ -498,8 +341,8 @@ void PInterfaceGl::addPersistentParam(const std::string& name, ci::ColorA *var, 
 {
 	addParam(name,var,optionsStr,readOnly);
 	const std::string id = name2id(name);
-	std::string colorStr = getXml().hasChild(id)
-			? getXml().getChild(id).getValue(colorToHex(defVal))
+	std::string colorStr = getSettingsXml().hasChild( m_id + "/" + id )
+			? getSettingsXml().getChild( m_id + "/" + id ).getValue(colorToHex(defVal))
 			: colorToHex(defVal);
 	*var = hexToColor( colorStr );
 	persistCallbacks().push_back(
@@ -518,8 +361,8 @@ void PInterfaceGl::addPersistentParam(const std::string& name, ci::Color *var, c
 {
 	addParam(name,var,optionsStr,readOnly);
 	const std::string id = name2id(name);
-	std::string colorStr = getXml().hasChild(id)
-			? getXml().getChild(id).getValue(colorToHex(defVal))
+	std::string colorStr = getSettingsXml().hasChild( m_id + "/" + id )
+			? getSettingsXml().getChild( m_id + "/" + id ).getValue(colorToHex(defVal))
 			: colorToHex(defVal);
 	ColorA ca = hexToColor( colorStr );
 	*var = Color( ca.r, ca.g, ca.b );

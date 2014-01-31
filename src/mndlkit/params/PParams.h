@@ -39,15 +39,6 @@ typedef std::shared_ptr< class PInterfaceGl > PInterfaceGlRef;
 
 class PInterfaceGl : public ci::params::InterfaceGl {
  public:
-	PInterfaceGl() {}
-	PInterfaceGl( const std::string &title, const ci::Vec2i &size,
-				  const ci::Vec2i &pos = ci::Vec2i::zero(),
-				  const ci::ColorA colorA = ci::ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) );
-	PInterfaceGl( ci::app::WindowRef window,
-				  const std::string &title, const ci::Vec2i &size,
-				  const ci::Vec2i &pos = ci::Vec2i::zero(),
-				  const ci::ColorA colorA = ci::ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) );
-
 	static PInterfaceGlRef create( const std::string &title, const ci::Vec2i &size,
 								   const ci::Vec2i &pos = ci::Vec2i::zero(),
 								   const ci::ColorA &color = ci::ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) );
@@ -72,8 +63,8 @@ class PInterfaceGl : public ci::params::InterfaceGl {
 	{
 		addParam(name,var,optionsStr,readOnly);
 		std::string id = name2id(name);
-		*var = getXml().hasChild(id)
-			? getXml().getChild(id).getValue((T)defVal)
+		*var = getSettingsXml().hasChild( m_id + "/" + id )
+			? getSettingsXml().getChild( m_id + "/" + id ).getValue((T)defVal)
 			: (T)defVal;
 		persistCallbacks().push_back(
 				boost::bind( &PInterfaceGl::persistParam<T>, this, var, id ) );
@@ -90,14 +81,14 @@ class PInterfaceGl : public ci::params::InterfaceGl {
 	{
 		addParam(name,var,optionsStr,readOnly);
 		const std::string id = name2id(name);
-		var->x = getXml().hasChild(id+"_x")
-			? getXml().getChild(id+"_x").getValue(defVal.x)
+		var->x = getSettingsXml().hasChild( m_id + "/" + id + "_x" )
+			? getSettingsXml().getChild( m_id + "/" + id + "_x" ).getValue(defVal.x)
 			: defVal.x;
-		var->y = getXml().hasChild(id+"_y")
-			? getXml().getChild(id+"_y").getValue(defVal.y)
+		var->y = getSettingsXml().hasChild( m_id + "/" + id + "_y" )
+			? getSettingsXml().getChild( m_id + "/" + id + "_y" ).getValue(defVal.y)
 			: defVal.y;
-		var->z = getXml().hasChild(id+"_z")
-			? getXml().getChild(id+"_z").getValue(defVal.z)
+		var->z = getSettingsXml().hasChild( m_id + "/" + id + "_z" )
+			? getSettingsXml().getChild( m_id + "/" + id + "_z" ).getValue(defVal.z)
 			: defVal.z;
 		persistCallbacks().push_back(
 				boost::bind( &PInterfaceGl::persistParam<T>, this, &(var->x), id+"_x" ) );
@@ -113,17 +104,17 @@ class PInterfaceGl : public ci::params::InterfaceGl {
 	{
 		addParam(name,var,optionsStr,readOnly);
 		const std::string id = name2id(name);
-		var->v.x = getXml().hasChild(id+"_x")
-			? getXml().getChild(id+"_x").getValue(defVal.v.x)
+		var->v.x = getSettingsXml().hasChild( m_id + "/" + id + "_x" )
+			? getSettingsXml().getChild( m_id + "/" + id + "_x" ).getValue(defVal.v.x)
 			: defVal.v.x;
-		var->v.y = getXml().hasChild(id+"_y")
-			? getXml().getChild(id+"_y").getValue(defVal.v.y)
+		var->v.y = getSettingsXml().hasChild( m_id + "/" + id + "_y" )
+			? getSettingsXml().getChild( m_id + "/" + id +"_y" ).getValue(defVal.v.y)
 			: defVal.v.y;
-		var->v.z = getXml().hasChild(id+"_z")
-			? getXml().getChild(id+"_z").getValue(defVal.v.z)
+		var->v.z = getSettingsXml().hasChild( m_id + "/" + id + "_z" )
+			? getSettingsXml().getChild( m_id + "/" + id + "_z" ).getValue(defVal.v.z)
 			: defVal.v.z;
-		var->w = getXml().hasChild(id+"_w")
-			? getXml().getChild(id+"_w").getValue(defVal.w)
+		var->w = getSettingsXml().hasChild( m_id + "/" + id + "_w" )
+			? getSettingsXml().getChild( m_id + "/" + id + "_w" ).getValue(defVal.w)
 			: defVal.w;
 		persistCallbacks().push_back(
 				boost::bind( &PInterfaceGl::persistParam<T>, this, &(var->v.x), id+"_x" ) );
@@ -150,28 +141,32 @@ class PInterfaceGl : public ci::params::InterfaceGl {
 	//! Iconifies or deiconifies all bars. Hides help is \a alwaysHideHelp is set.
 	static void maximizeAllParams( bool maximized = true, bool alwaysHideHelp = true );
 
-	/** Loads persistent params from file. At the moment this only works when
-	 * called at application start up, before creating persistent parameteres.
-	 * Will remember the filename for saving later.
+	/** Loads persistent params. At the moment this only works when
+	 * called at application start up, before creating persistent parameters.
 	 */
-	static void load( const std::string &path = "params.xml" );
-	static void load( const ci::fs::path &path );
+	static void readSettings( const ci::DataSourceRef &source  );
 
-	/** Save persistent params (to the path passed to load before). */
-	static void save();
+	/** Save persistent params. */
+	static void writeSettings( const ci::DataTargetRef &target );
 
 protected:
+	PInterfaceGl( const std::string &title, const ci::Vec2i &size,
+				  const ci::Vec2i &pos = ci::Vec2i::zero(),
+				  const ci::ColorA colorA = ci::ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) );
+	PInterfaceGl( ci::app::WindowRef window,
+				  const std::string &title, const ci::Vec2i &size,
+				  const ci::Vec2i &pos = ci::Vec2i::zero(),
+				  const ci::ColorA colorA = ci::ColorA( 0.3f, 0.3f, 0.3f, 0.4f ) );
+
 	std::string m_id;
+	std::vector< boost::function< void() > > mPersistCallbacks;
+	ci::XmlTree mRoot;
 
 	// "manager"
-	struct Manager {
-		std::vector< boost::function< void() > > persistCallbacks;
-		ci::XmlTree root;
-		ci::fs::path filename;
-
-		Manager() {
-			root = ci::XmlTree::createDoc();
-		}
+	struct Manager
+	{
+		ci::XmlTree mSettingsXml;
+		std::vector< std::weak_ptr< PInterfaceGl > > mBars;
 	};
 
 	static Manager& manager() {
@@ -179,17 +174,24 @@ protected:
 		return *m;
 	}
 
-	static std::vector< boost::function< void() > >& persistCallbacks()
+	static ci::XmlTree & getSettingsXml()
 	{
-		return manager().persistCallbacks;
+		return manager().mSettingsXml;
 	}
-	static ci::XmlTree& root()
+
+	static std::vector< std::weak_ptr< PInterfaceGl > >& getBars()
 	{
-		return manager().root;
+		return manager().mBars;
 	}
-	static ci::fs::path& filename()
+
+	std::vector< boost::function< void() > >& persistCallbacks()
 	{
-		return manager().filename;
+		return mPersistCallbacks;
+	}
+
+	ci::XmlTree& root()
+	{
+		return mRoot;
 	}
 
 	// save current size, position and iconified status value into an xml tree
@@ -222,23 +224,15 @@ protected:
 	void persistColor(ci::Color *var, const std::string& paramId);
 	void persistColorA(ci::ColorA *var, const std::string& paramId);
 
-	ci::XmlTree& getXml() {
-		if (!root().hasChild(m_id))
-			root().push_back(ci::XmlTree(m_id,""));
-		return root().getChild(m_id);
+	ci::XmlTree& getXml()
+	{
+		if (root().getTag() == "")
+			root().setTag( m_id );
+		return root();
 	}
 
 	// convert "some title" to SomeTitle so it can be used as XML tag
 	static std::string name2id( const std::string& name );
-
-	// presets
-	int mPreset; // active preset
-	std::vector< std::pair< std::string, boost::any > > mPresetVars; // variables in preset
-	std::string mPresetName; // label for storing preset
-	std::vector< std::string > mPresetLabels; // all preset labels
-	void storePreset();
-	void restorePreset();
-	void removePreset();
 };
 
 } } // namespace mndl::params
