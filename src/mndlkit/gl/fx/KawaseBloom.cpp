@@ -195,7 +195,7 @@ ci::gl::Texture &KawaseBloom::process( const ci::gl::Texture &source, int iterat
 	mObj->mMixerShader.uniform( "bloomStrength", strength );
 
 	source.enableAndBind();
-	for ( int i = 0; i < iterations; i++ )
+	for ( int i = 0; i < 8; i++ )
 	{
 		mObj->mBloomFbo.getTexture( i ).bind( i + 1 );
 	}
