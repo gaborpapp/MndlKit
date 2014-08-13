@@ -37,7 +37,8 @@ class Invert
 	{ return InvertRef( new Invert( size.x, size.y ) ); }
 
 	ci::gl::Texture & process( const ci::gl::Texture &source,
-			bool invert, bool invertRgb, bool invertAlpha, float mixFactor );
+							   bool invert = true, bool invertRgb = true,
+							   bool invertAlpha = true, float mixFactor = 1.0f );
 
  protected:
 	Invert( int width, int height );
