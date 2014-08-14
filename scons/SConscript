@@ -4,8 +4,8 @@ _INCLUDES = [Dir('../src').abspath]
 
 _SOURCES_PARAMS = ['PParams.cpp']
 _SOURCES_PARAMS = [File('../src/mndlkit/params/' + s).abspath for s in _SOURCES_PARAMS]
-_SOURCES_FX = ['BrightnessContrast.cpp', 'GaussianBlur.cpp', 'Invert.cpp', 'KawaseBloom.cpp',
-	'PhotoFilm.cpp']
+_SOURCES_FX = ['BrightnessContrast.cpp', 'GaussianBlur.cpp', 'Hscb.cpp',
+	'Invert.cpp', 'KawaseBloom.cpp', 'PhotoFilm.cpp']
 _SOURCES_FX = [File('../src/mndlkit/gl/fx/' + s).abspath for s in _SOURCES_FX]
 _SOURCES = _SOURCES_PARAMS + _SOURCES_FX
 
