@@ -16,6 +16,8 @@
 
  Based on the vvvv TextureFx PhotoFilm filter.
 */
+#include "cinder/app/App.h"
+
 #include "PhotoFilm.h"
 
 using namespace ci;
@@ -50,15 +52,16 @@ const char *PhotoFilm::sPhotoFilmFragmentShader = "#version 120\n"
 		{
 			vec2 uv = gl_TexCoord[ 0 ].st;
 			vec4 c = texture2D( tex, uv );
+			vec4 c0 = c;
 			float gray = dot( c.rgb, vec3( 0.299, 0.587, 0.114 ) );
 			vec3 rgb = c.rgb - vec3( gray );
 			c.rgb = gray * pow( 2.0, brightness ) *
 							mix( mix( colorA, colorB, smoothstep( -0.4, 0.4, gray - 0.4 ) ),
-								 1.0, pow( gray, 2.0 ) );
+								 vec3( 1.0 ), pow( gray, 2.0 ) );
 			c.rgb = c.rgb + sign( rgb ) * pow( abs( rgb ) * sqrt( 2.0 ) * srcRgbAmount,
-											   pow( 2.0, srcRgbGamma ) );
-			c.rgb = pow( c.rgb, pow( 2.0, gamma ) );
-			c.rgb = lerp( c.rgb, texture2D( tex, uv ), mixFactor );
+											   vec3( pow( 2.0, srcRgbGamma ) ) );
+			c.rgb = pow( c.rgb, vec3( pow( 2.0, gamma ) ) );
+			c.rgb = mix( c0.rgb, c.rgb, mixFactor );
 			gl_FragColor = c;
 		}
 );
@@ -70,10 +73,18 @@ PhotoFilm::PhotoFilm( int w, int h )
 	format.enableDepthBuffer( false );
 	mOutputFbo = ci::gl::Fbo( w, h, format );
 
-	mPhotoFilmShader = ci::gl::GlslProg::create( sPhotoFilmVertexShader, sPhotoFilmFragmentShader );
-	mPhotoFilmShader->bind();
-	mPhotoFilmShader->uniform( "tex", 0 );
-	mPhotoFilmShader->unbind();
+	try
+	{
+		mPhotoFilmShader = ci::gl::GlslProg::create( sPhotoFilmVertexShader, sPhotoFilmFragmentShader );
+		mPhotoFilmShader->bind();
+		mPhotoFilmShader->uniform( "tex", 0 );
+		mPhotoFilmShader->unbind();
+	}
+	catch ( const ci::gl::GlslProgCompileExc &exc )
+	{
+		ci::app::console() << exc.what() << std::endl;
+	}
+
 }
 
 ci::gl::Texture & PhotoFilm::process( const ci::gl::Texture &source, float brightness,
