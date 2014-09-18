@@ -126,8 +126,10 @@ void PInterfaceGl::readSettings( const ci::DataSourceRef &source  )
 void PInterfaceGl::writeSettings( const ci::DataTargetRef &target )
 {
 	ci::XmlTree doc = ci::XmlTree::createDoc();
-	for ( std::weak_ptr< PInterfaceGl > barWeak : getBars() )
+//	for ( std::weak_ptr< PInterfaceGl > barWeak : getBars() )
+	for ( int index = 0; index < getBars().size(); ++index )
 	{
+		std::weak_ptr< PInterfaceGl > barWeak = getBars()[ index ];
 		auto bar = barWeak.lock();
 		if ( !bar )
 		{
